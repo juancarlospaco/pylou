@@ -1,0 +1,17 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Pylou
+Comment=Fork of Kulo with Milou inspiration without Baloo.
+Type=Service
+ServiceTypes=Plasma/Applet,Plasma/PopupApplet
+Icon=edit-find
+X-Plasma-API=python
+X-Plasma-MainScript=code/main.py
+X-KDE-PluginInfo-Author=Juan Carlos
+X-KDE-PluginInfo-Email=juancarlospaco@gmail.com
+X-KDE-PluginInfo-Website=https://github.com/juancarlospaco/pylou#pylou
+X-KDE-PluginInfo-Name=Pylou
+X-KDE-PluginInfo-Version=3
+X-KDE-PluginInfo-Depends=plasma-scriptengine-python
+X-KDE-PluginInfo-License=GPLv3+
+X-KDE-PluginInfo-EnabledByDefault=true
