@@ -130,7 +130,7 @@ class PylouWidget(QGraphicsWidget):
             self.label.setText("ERROR: History Empty.")
 
     def addItem(self):
-        """Add Items from Locate command to the Kulazo."""
+        """Add Items from Locate command."""
         start_time = datetime.now().second
         self.stringlist.clear()
         lineText = self.lineEdit.text()
@@ -227,7 +227,7 @@ class PylouApplet(Applet):
         Applet.__init__(self, parent)
 
     def init(self):
-        """Start the Kulazo Applet."""
+        """Start the Applet."""
         self._widget = None
         self.setHasConfigurationInterface(True)
         self.setAspectRatioMode(Plasma.IgnoreAspectRatio)
@@ -277,8 +277,8 @@ class PylouApplet(Applet):
         self.BColorButton.setColor(self.bcolor)
         self.history_file_path_field = KLineEdit(HISTORY_FILE_PATH)
         self.history_file_path_field.setDisabled(True)
-        self.kulazo_file_path_field = KLineEdit(__file__)
-        self.kulazo_file_path_field.setDisabled(True)
+        self.python_file_path_field = KLineEdit(__file__)
+        self.python_file_path_field.setDisabled(True)
         self.kill_baloo = QCheckBox("Disable Baloo")
         self.kill_baloo.setToolTip("Enable/Disable KDE Desktop Search Indexing")
         self.kill_baloo.stateChanged.connect(lambda: call(
@@ -304,8 +304,8 @@ class PylouApplet(Applet):
         self.layBox.addWidget(self.Histor, 6, 1)
         self.layBox.addWidget(QLabel("History file"), 7, 0)
         self.layBox.addWidget(self.history_file_path_field, 7, 1)
-        self.layBox.addWidget(QLabel("Kulazo file"), 8, 0)
-        self.layBox.addWidget(self.kulazo_file_path_field, 8, 1)
+        self.layBox.addWidget(QLabel(__doc__ + "file"), 8, 0)
+        self.layBox.addWidget(self.python_file_path_field, 8, 1)
         self.layBox.addWidget(QLabel("Banned Words"), 9, 0)
         self.layBox.addWidget(self.banned, 9, 1)
 
