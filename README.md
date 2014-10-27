@@ -33,6 +33,7 @@ cd /tmp
 git clone https://github.com/juancarlospaco/pylou.git
 plasmapkg --install /tmp/pylou
 ```
+- Check the Pylou Settings before use for better experience!.
 
 
 # Requisites:
