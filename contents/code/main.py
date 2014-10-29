@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 
@@ -27,6 +28,13 @@
 
 
 """ Pylou """
+__version__ = ' 3.0.0 '
+__license__ = ' GPLv3+ LGPLv3+ '
+__author__ = ' Juan Carlos '
+__email__ = ' juancarlospaco@gmail.com '
+__url__ = 'https://github.com/juancarlospaco/pylou#pylou'
+__source__ = ('https://raw.githubusercontent.com/juancarlospaco/'
+              'pylou/master/contents/code/main.py')
 
 
 from datetime import datetime
@@ -34,6 +42,7 @@ from os import listdir, path
 from re import purge, search
 from subprocess import call, PIPE, Popen
 from tempfile import mkstemp
+from urllib2 import urlopen
 
 from PyKDE4.kdecore import KConfig
 from PyKDE4.kdeui import (KColorButton, KDialog, KFontRequester, KLineEdit,
@@ -78,9 +87,8 @@ class PylouWidget(QGraphicsWidget):
         self.layou.addItem(self.lineEdit)
         self.setLayout(self.layou)
         self.lineEdit.returnPressed.connect(self.addItem)
-        self.setMinimumSize(200, 200)
+        self.setMinimumSize(200, 99)
         self.setMaximumSize(666, 666)
-        self.resize(self.minimumSize())
         # custom user choosed fonts
         user_font_family = QVariant(
             self.applet.configurations.readEntry("TextFont", QVariant(QFont())))
@@ -103,6 +111,8 @@ class PylouWidget(QGraphicsWidget):
         with open(self.histfile, 'r') as history_file:
             self.history = history_file.readlines()
         self.historyCurrentItem = 0
+        self.treeview.nativeWidget().hide()
+        self.resize(self.minimumSize())
 
     def saveHistory(self):
         """Write History to History file."""
@@ -139,8 +149,14 @@ class PylouWidget(QGraphicsWidget):
             self.historyCurrentItem = 1
             self.saveHistory()
         self.historyCurrentItem = self.historyCurrentItem - 1
-        comand = "chrt -i 0 /usr/bin/locate --ignore-case --existing --quiet {}"
-        command_to_run = comand.format(lineText)
+        command = "ionice --ignore --class 3 chrt --idle 0 "  # Nice CPU / IO
+        command += "locate --ignore-case --existing --quiet --limit 9999 {}"
+        condition = str(self.applet.configurations.readEntry("Home")) == "true"
+        if len(str(lineText).strip()) and condition:
+            command_to_run = command.format(  # Only Search inside /Home folders
+                path.join(path.expanduser("~"), "*{}*".format(lineText)))
+        else:
+            command_to_run = command.format(lineText)
         locate_output = Popen(command_to_run, shell=True, stdout=PIPE).stdout
         results = tuple(locate_output.readlines())
         banned = self.applet.configurations.readEntry("Banned")
@@ -157,10 +173,13 @@ class PylouWidget(QGraphicsWidget):
             self.label.setText("Found {} results on {} seconds !".format(
                 number_of_results, abs(datetime.now().second - start_time)))
             self.resize(500, 12 * number_of_results)
+            self.treeview.nativeWidget().show()
             self.treeview.nativeWidget().setFocus()
         else:  # if no items found Focus on LineEdit
             self.label.setText("Search")
             self.resize(self.minimumSize())
+            self.treeview.nativeWidget().hide()
+            self.lineEdit.nativeWidget().selectAll()
             self.lineEdit.nativeWidget().setFocus()
 
     def openDirectory(self, index):
@@ -289,6 +308,13 @@ class PylouApplet(Applet):
             <b>Indexing Disabled, Baloo is Dead !
             """ if self.kill_baloo.isChecked() else """
             <b>Indexing Enabled, Baloo is Running !"""))
+        self.updatez = KPushButton("Check for Updates", self.dialog,
+                                   clicked=lambda: self.check_for_updates())
+        self.updatez.setToolTip("Check for Pylou updates from the internet")
+        self.home_sweet_home = QCheckBox("Only Search Home")
+        self.home_sweet_home.setToolTip("Only Search on my Home folders")
+        self.home_sweet_home.setChecked(
+            bool(self.configurations.readEntry("Home", True)))
         # pack all widgets
         self.layBox.addWidget(self.title, 0, 1)
         self.layBox.addWidget(QLabel("Font"), 1, 0)
@@ -308,9 +334,12 @@ class PylouApplet(Applet):
         self.layBox.addWidget(self.python_file_path_field, 8, 1)
         self.layBox.addWidget(QLabel("Banned Words"), 9, 0)
         self.layBox.addWidget(self.banned, 9, 1)
-
-        self.layBox.addWidget(QLabel("<b>Disable Indexing"), 11, 0)
-        self.layBox.addWidget(self.kill_baloo, 11, 1)
+        self.layBox.addWidget(QLabel("SelfUpdating"), 10, 0)
+        self.layBox.addWidget(self.updatez, 10, 1)
+        self.layBox.addWidget(QLabel("<b>Disable Indexing"), 12, 0)
+        self.layBox.addWidget(self.kill_baloo, 12, 1)
+        self.layBox.addWidget(QLabel("Search Paths"), 13, 0)
+        self.layBox.addWidget(self.home_sweet_home, 13, 1)
         # button box on the bottom
         self.dialog.setButtons(KDialog.ButtonCodes(
             KDialog.ButtonCode(KDialog.Ok | KDialog.Cancel | KDialog.Apply)))
@@ -331,11 +360,22 @@ class PylouApplet(Applet):
         self.configurations.writeEntry("AlternateBColor", self.bcolor.name())
         self.configurations.writeEntry("TextFont", QVariant(self.tfont))
         self.configurations.writeEntry("Banned", self.banned.toPlainText())
+        self.configurations.writeEntry("Home", self.home_sweet_home.isChecked())
 
     def showConfigurationInterface(self):
         """Show configuration dialog."""
         self.dialog.show()
         self.dialog.raise_()
+
+    def check_for_updates(self):
+        """Method to check for updates from Git repo versus this version."""
+        this_version = str(open(__file__).read())
+        last_version = str(urlopen(__source__).read().decode("utf8"))
+        if this_version != last_version:
+            m = "Theres new Version available!<br>Download update from the web"
+        else:
+            m = "No new updates!<br>You have the lastest version of this app!."
+        return QMessageBox.information(self, __doc__.title(), "<b>" + m)
 
 
 def CreateApplet(parent):
