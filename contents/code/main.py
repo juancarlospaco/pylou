@@ -370,12 +370,12 @@ class PylouApplet(Applet):
     def check_for_updates(self):
         """Method to check for updates from Git repo versus this version."""
         this_version = str(open(__file__).read())
-        last_version = str(urlopen(__source__).read().decode("utf8"))
+        last_version = str(urlopen(__source__).read())
         if this_version != last_version:
             m = "Theres new Version available!<br>Download update from the web"
         else:
             m = "No new updates!<br>You have the lastest version of this app!."
-        return QMessageBox.information(self, __doc__.title(), "<b>" + m)
+        return QMessageBox.information(None, __doc__.title(), "<b>" + m)
 
 
 def CreateApplet(parent):
