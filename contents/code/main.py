@@ -28,7 +28,7 @@
 
 
 """Pylou."""
-__package = "pylou"
+__package__ = "pylou"
 __version__ = ' 3.0.0 '
 __license__ = ' GPLv3+ LGPLv3+ '
 __author__ = ' Juan Carlos '
@@ -285,7 +285,7 @@ class PylouApplet(Applet):
     def prepareConfigDialog(self):
         """Prepare the Configuration Dialog."""
         self.bcolor, self.dialog = QColor(), KDialog()
-        self.dialog.setWindowTitle(__doc__ + "Settings")
+        self.dialog.setWindowTitle(__package__ + "Settings")
         self.layBox = QGridLayout(self.dialog.mainWidget())
         self.title = KTitleWidget(self.dialog)
         self.title.setText(__doc__ + " !")
@@ -353,7 +353,7 @@ class PylouApplet(Applet):
         self.layBox.addWidget(self.Histor, 6, 1)
         self.layBox.addWidget(QLabel("History file"), 7, 0)
         self.layBox.addWidget(self.history_file_path_field, 7, 1)
-        self.layBox.addWidget(QLabel(__doc__ + "file"), 8, 0)
+        self.layBox.addWidget(QLabel(__package__ + "file"), 8, 0)
         self.layBox.addWidget(self.python_file_path_field, 8, 1)
         self.layBox.addWidget(QLabel("Banned Words"), 9, 0)
         self.layBox.addWidget(self.banned, 9, 1)
