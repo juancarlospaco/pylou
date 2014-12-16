@@ -27,7 +27,8 @@
 #   Free Software Foundation, Inc.,
 
 
-""" Pylou """
+"""Pylou."""
+__package = "pylou"
 __version__ = ' 3.0.0 '
 __license__ = ' GPLv3+ LGPLv3+ '
 __author__ = ' Juan Carlos '
@@ -56,8 +57,8 @@ from PyQt4.QtGui import (QCheckBox, QColor, QCompleter, QFont,
 
 
 HISTORY_FILE_PATH = mkstemp()[1]
-DISABLE_BALOO_CMD = ("kwriteconfig --file baloofilerc --group 'Basic Settings' "
-                     "--key 'Indexing-Enabled' {}")
+DISABLE_BALOO_CMD = ("kwriteconfig --file baloofilerc --group 'Basic Settings'"
+                     " --key 'Indexing-Enabled' {}")
 
 
 def delete_my_history():
@@ -68,13 +69,18 @@ def delete_my_history():
 
 
 class PylouWidget(QGraphicsWidget):
+
+    """Main Widget for Pylou."""
+
     def __init__(self, parent):
+        """Init class."""
         QGraphicsWidget.__init__(self)
         self.applet = parent
 
     def init(self):
         """Start Pylou Widget."""
-        self.layou, self.stringlist = QGraphicsLinearLayout(self), QStringList()
+        self.layou = QGraphicsLinearLayout(self)
+        self.stringlist = QStringList()
         self.model = QStringListModel(self.applet)
         self.model.setStringList(self.stringlist)
         self.treeview = MyTreeView(self)
@@ -90,8 +96,8 @@ class PylouWidget(QGraphicsWidget):
         self.setMinimumSize(200, 99)
         self.setMaximumSize(666, 666)
         # custom user choosed fonts
-        user_font_family = QVariant(
-            self.applet.configurations.readEntry("TextFont", QVariant(QFont())))
+        user_font_family = QVariant(self.applet.configurations.readEntry(
+            "TextFont", QVariant(QFont())))
         self.treeview.nativeWidget().setFont(QFont(user_font_family))
         # custom user choosed styles
         user_style_sheet = "color:{};alternate-background-color:{}".format(
@@ -153,16 +159,16 @@ class PylouWidget(QGraphicsWidget):
         command += "locate --ignore-case --existing --quiet --limit 9999 {}"
         condition = str(self.applet.configurations.readEntry("Home")) == "true"
         if len(str(lineText).strip()) and condition:
-            command_to_run = command.format(  # Only Search inside /Home folders
+            command_to_run = command.format(  # Only Search inside Home folders
                 path.join(path.expanduser("~"), "*{}*".format(lineText)))
         else:
             command_to_run = command.format(lineText)
         locate_output = Popen(command_to_run, shell=True, stdout=PIPE).stdout
         results = tuple(locate_output.readlines())
         banned = self.applet.configurations.readEntry("Banned")
-        bannedword_regex_pattern = str(banned).strip().lower().replace(" ", "|")
+        banned_regex_pattern = str(banned).strip().lower().replace(" ", "|")
         for item in results:
-            if not search(bannedword_regex_pattern, str(item)):  # banned words
+            if not search(banned_regex_pattern, str(item)):  # banned words
                 self.stringlist.append(item[:-1])
         purge()  # Purge RegEX Cache
         self.model.setStringList(self.stringlist)
@@ -194,11 +200,15 @@ class PylouWidget(QGraphicsWidget):
 
 
 class MyLineEdit(Plasma.LineEdit):
+
+    """Custom LineEdit for Pylou."""
+
     def __init__(self, *args):
+        """Init class."""
         Plasma.LineEdit.__init__(self, *args)
         self.nativeWidget().setClearButtonShown(True)
         self.nativeWidget().setPlaceholderText("Type to Search...")
-        self.nativeWidget().setToolTip("""<p>Type and press ENTER: to Search<br>
+        self.nativeWidget().setToolTip("""<p>Type and press ENTER:to Search<br>
         UP-DOWN: History navigation<br>Search Empty Query: Clear out""")
         self.completer = QCompleter(tuple(sorted(set(
             [_ for _ in listdir(path.expanduser("~")) if not _.startswith(".")]
@@ -221,7 +231,11 @@ class MyLineEdit(Plasma.LineEdit):
 
 
 class MyTreeView(Plasma.TreeView):
+
+    """Custom TreeView for Pylou."""
+
     def __init__(self, *args):
+        """Init class."""
         Plasma.TreeView.__init__(self, *args)
         self.nativeWidget().header().hide()
         self.nativeWidget().setAnimated(True)
@@ -242,7 +256,11 @@ class MyTreeView(Plasma.TreeView):
 
 
 class PylouApplet(Applet):
+
+    """Main Applet containing the UI of Pylou."""
+
     def __init__(self, parent, args=None):
+        """Init class."""
         Applet.__init__(self, parent)
 
     def init(self):
@@ -259,6 +277,10 @@ class PylouApplet(Applet):
         # for some odd reason this has to be called twice?
         self.setGraphicsWidget(self._widget)
         self.prepareConfigDialog()
+
+    def update_db(self):
+        """Update the DB."""
+        return call("kdesudo --noignorebutton -c updatedb", shell=True)
 
     def prepareConfigDialog(self):
         """Prepare the Configuration Dialog."""
@@ -278,16 +300,17 @@ class PylouApplet(Applet):
         self.ColorButton.setColor(self.tcolor)
         self.BColorButton = KColorButton(self.dialog)
         # button to update the DB via sudo updatedb
-        clk = lambda: call("kdesudo --noignorebutton -c updatedb", shell=True)
-        self.UpdateDB = KPushButton("Update Database", self.dialog, clicked=clk)
-        self.UpdateDB.setToolTip("Database is Updated every Reboot and Daily !")
+
+        self.UpdateDB = KPushButton("Update Database", self.dialog,
+                                    clicked=lambda: self.update_db())
+        self.UpdateDB.setToolTip("Database is Updated every Reboot and Daily!")
         self.Histor = KPushButton("Delete my History", self.dialog,
                                   clicked=delete_my_history)
         self.Histor.setToolTip("History is Deleted every Reboot !")
         # list of banned words separated by spaces
         self.banned = KTextEdit(self.dialog)
         self.banned.setPlainText(self.configurations.readEntry(
-            "Banned", "sex porn drugs suicide decapitated religion").toString())
+            "Banned", "sex porn drugs suicide decapitate religion").toString())
         # set the colors
         cg = KConfig("kdeglobals")
         color = cg.group("Colors:View").readEntry(
@@ -299,7 +322,7 @@ class PylouApplet(Applet):
         self.python_file_path_field = KLineEdit(__file__)
         self.python_file_path_field.setDisabled(True)
         self.kill_baloo = QCheckBox("Disable Baloo")
-        self.kill_baloo.setToolTip("Enable/Disable KDE Desktop Search Indexing")
+        self.kill_baloo.setToolTip("Enable/Disable Desktop Search Indexing")
         self.kill_baloo.stateChanged.connect(lambda: call(
             DISABLE_BALOO_CMD.format(str(
                 not self.kill_baloo.isChecked()).lower()), shell=True))
@@ -354,13 +377,14 @@ class PylouApplet(Applet):
         self.bcolor = self.BColorButton.color()
         self._widget.treeview.nativeWidget().setFont(self.tfont)
         self._widget.treeview.nativeWidget().setStyleSheet(
-            "color:{};alternate-background-color:{}".format(self.tcolor.name(),
-                                                            self.bcolor.name()))
+            "color:{};alternate-background-color:{}".format(
+                self.tcolor.name(), self.bcolor.name()))
         self.configurations.writeEntry("TextColor", self.tcolor.name())
         self.configurations.writeEntry("AlternateBColor", self.bcolor.name())
         self.configurations.writeEntry("TextFont", QVariant(self.tfont))
         self.configurations.writeEntry("Banned", self.banned.toPlainText())
-        self.configurations.writeEntry("Home", self.home_sweet_home.isChecked())
+        self.configurations.writeEntry("Home",
+                                       self.home_sweet_home.isChecked())
 
     def showConfigurationInterface(self):
         """Show configuration dialog."""
